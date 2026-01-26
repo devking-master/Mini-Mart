@@ -2,108 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LayoutDashboard, MessageSquare, PlusCircle, LogOut, User, Menu, X, ShoppingBag, Sun, Moon } from 'lucide-react';
+import { Search, MessageSquare, PlusCircle, LogOut, User, Menu, X, ShoppingBag, Sun, Moon, Bell } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const SidebarContent = ({ navItems, location, setIsMobileMenuOpen, unreadCount, toggleTheme, theme, currentUser, handleLogout }) => (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-colors duration-300">
-        <div className="p-6 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 group">
-                <motion.div
-                    whileHover={{ scale: 1.1, rotate: -5 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30 transition-transform"
-                >
-                    M
-                </motion.div>
-                <motion.span
-                    initial={{ opacity: 0.8 }}
-                    whileHover={{ opacity: 1, x: 2 }}
-                    className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 group-hover:from-blue-600 group-hover:to-indigo-600 dark:group-hover:from-blue-400 dark:group-hover:to-indigo-400 transition-all duration-300"
-                >
-                    Mini Mart
-                </motion.span>
-            </Link>
-            <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-2 py-4">
-            {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative overflow-hidden group ${isActive
-                            ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-sm'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                            }`}
-                    >
-                        {isActive && (
-                            <motion.div
-                                layoutId="activeTab"
-                                className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-full"
-                            />
-                        )}
-
-                        <div className="relative">
-                            <item.icon size={20} className={isActive ? 'stroke-[2.5px]' : 'stroke-2'} />
-                            {item.name === 'Messages' && unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                                </span>
-                            )}
-                        </div>
-                        <span className="font-medium">{item.name}</span>
-                    </NavLink>
-                );
-            })}
-        </nav>
-
-        <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-3 px-4 py-3 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-gray-800 shadow-md overflow-hidden">
-                    {currentUser?.photoURL ? (
-                        <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                        currentUser?.email?.[0].toUpperCase()
-                    )}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {currentUser?.email?.split('@')[0]}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        Online
-                    </p>
-                </div>
-            </div>
-            <button
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-2 w-full text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors text-sm font-medium"
-            >
-                <LogOut size={18} />
-                Sign Out
-            </button>
-        </div>
-    </div>
-);
+import Footer from './Footer';
 
 export default function Layout({ children }) {
     const { currentUser, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+
+    // Handle scroll for glassmorphism
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -141,62 +59,252 @@ export default function Layout({ children }) {
 
     const navItems = [
         { name: 'Browse', path: '/', icon: ShoppingBag },
-        { name: 'Sell Item', path: '/create-listing', icon: PlusCircle },
+        { name: 'Sell', path: '/create-listing', icon: PlusCircle },
         { name: 'Messages', path: '/chat', icon: MessageSquare },
         { name: 'Profile', path: '/profile', icon: User },
     ];
 
+    const [headerSearch, setHeaderSearch] = useState("");
+    const [headerResults, setHeaderResults] = useState([]);
+    const [allListings, setAllListings] = useState([]);
+
+    useEffect(() => {
+        if (location.pathname !== '/') return;
+        const q = query(collection(db, "listings"), orderBy("createdAt", "desc"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setAllListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        });
+        return unsubscribe;
+    }, [location.pathname]);
+
+    useEffect(() => {
+        if (!headerSearch) {
+            setHeaderResults([]);
+            return;
+        }
+        const filtered = allListings.filter(l =>
+            l.title?.toLowerCase().includes(headerSearch.toLowerCase())
+        );
+        setHeaderResults(filtered);
+    }, [headerSearch, allListings]);
+
+    const isHome = location.pathname === '/';
+
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-gray-950 flex transition-colors duration-300">
-            {/* Desktop Sidebar */}
-            <div className="hidden md:block w-64 h-screen sticky top-0 z-50">
-                <SidebarContent
-                    navItems={navItems}
-                    location={location}
-                    setIsMobileMenuOpen={setIsMobileMenuOpen}
-                    unreadCount={unreadCount}
-                    toggleTheme={toggleTheme}
-                    theme={theme}
-                    currentUser={currentUser}
-                    handleLogout={handleLogout}
-                />
-            </div>
+        <div className={`bg-white dark:bg-[#0a0a0b] flex flex-col transition-all duration-500 ${location.pathname === '/chat' ? 'h-screen overflow-hidden' : 'min-h-screen'
+            }`}>
+            {/* --- PREMIUM TOP NAVIGATION --- */}
+            <nav
+                className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled
+                    ? 'py-2.5 bg-white/80 dark:bg-[#0a0a0b]/80 backdrop-blur-xl border-b border-gray-100/50 dark:border-gray-800/50 shadow-lg'
+                    : 'py-5 bg-transparent'
+                    }`}
+            >
+                <div className="max-w-[1600px] mx-auto px-6 md:px-12 flex items-center justify-between">
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center gap-3 group z-10 flex-shrink-0">
+                        <motion.div
+                            whileHover={{ scale: 1.1, rotate: -5 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-[0_8px_20px_-4px_rgba(37,99,235,0.4)]"
+                        >
+                            M
+                        </motion.div>
+                        <AnimatePresence>
+                            {!scrolled && (
+                                <motion.span
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    className={`text-2xl font-black tracking-tighter transition-colors ${isHome && !scrolled
+                                        ? (theme === 'dark' ? 'text-white' : 'text-blue-950')
+                                        : 'text-gray-900 dark:text-white'
+                                        }`}
+                                >
+                                    Mini Mart.
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </Link>
 
-            {/* Mobile Header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between transition-colors">
-                <Link to="/" className="flex items-center gap-2 group">
-                    <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-                    >
-                        M
-                    </motion.div>
-                    <span className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Mini Mart</span>
-                </Link>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg"
-                    >
-                        {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-                    </button>
-                    <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="p-2 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg relative"
-                    >
-                        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-                        {!isMobileMenuOpen && unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                            </span>
+                    {/* Desktop Nav Items */}
+                    <div className="hidden lg:flex items-center gap-6">
+                        <div className="flex items-center gap-2 bg-gray-100/50 dark:bg-gray-800/30 p-1.5 rounded-[1.5rem] backdrop-blur-md border border-gray-200/20 dark:border-gray-700/20">
+                            {navItems.map((item) => {
+                                const isActive = location.pathname === item.path;
+                                return (
+                                    <NavLink
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${isActive
+                                            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-white shadow-md ring-1 ring-black/5'
+                                            : (isHome && !scrolled
+                                                ? (theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-blue-900/70 hover:text-blue-950')
+                                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white')
+                                            }`}
+                                    >
+                                        <div className="relative">
+                                            <item.icon size={16} className={isActive ? 'stroke-[2px]' : 'stroke-2'} />
+                                            {item.name === 'Messages' && unreadCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                </span>
+                                            )}
+                                        </div>
+                                        {item.name}
+                                    </NavLink>
+                                );
+                            })}
+                        </div>
+
+                        {/* Sticky Search Bar - Only shown on Home page */}
+                        {isHome && (
+                            <div className="relative">
+                                <div className={`relative transition-all duration-500 overflow-hidden ${scrolled ? 'w-[260px] opacity-100' : 'w-0 opacity-0'}`}>
+                                    <div className="relative flex items-center">
+                                        <Search className="absolute left-3.5 text-gray-400" size={14} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search market..."
+                                            value={headerSearch}
+                                            onChange={(e) => setHeaderSearch(e.target.value)}
+                                            className="w-full pl-9 pr-4 py-2 bg-gray-100/50 dark:bg-gray-800/30 border border-gray-200/20 dark:border-gray-700/20 rounded-xl text-sm focus:outline-none focus:bg-white dark:focus:bg-gray-800 transition-all font-medium text-gray-900 dark:text-white"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    navigate(`/?search=${headerSearch}`);
+                                                    setHeaderSearch("");
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Header Suggestions Dropdown */}
+                                <AnimatePresence>
+                                    {headerSearch && scrolled && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                                            style={{ zIndex: 9999 }}
+                                            className={`absolute top-full left-0 right-0 mt-2 border rounded-2xl shadow-2xl overflow-hidden w-[320px] ${theme === 'dark' ? 'bg-[#121214] border-gray-800' : 'bg-white border-gray-100'
+                                                }`}
+                                        >
+                                            <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-1.5 space-y-1">
+                                                {headerResults.length > 0 ? (
+                                                    headerResults.slice(0, 5).map(listing => (
+                                                        <Link
+                                                            key={listing.id}
+                                                            to={`/listing/${listing.id}`}
+                                                            onClick={() => setHeaderSearch("")}
+                                                            className={`w-full p-2 flex items-center gap-3 rounded-xl transition-all duration-200 group ${theme === 'dark' ? 'hover:bg-gray-800/50' : 'hover:bg-blue-50'
+                                                                }`}
+                                                        >
+                                                            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-white/5">
+                                                                <img src={listing.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className={`font-bold text-[12px] truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{listing.title}</p>
+                                                                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black">₦{listing.price.toLocaleString()}</p>
+                                                            </div>
+                                                            <div className="w-6 h-6 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 opacity-0 group-hover:opacity-100 transition-all">
+                                                                <ArrowRight size={10} className="text-blue-500" />
+                                                            </div>
+                                                        </Link>
+                                                    ))
+                                                ) : (
+                                                    <div className="py-6 px-4 text-center">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No instant matches</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         )}
-                    </button>
-                </div>
-            </div>
+                    </div>
 
-            {/* Mobile Drawer */}
+                    {/* Right Section: Theme + Profile + Logout */}
+                    <div className="hidden lg:flex items-center gap-4 z-10">
+                        <button
+                            onClick={toggleTheme}
+                            className={`p-3 rounded-2xl transition-all duration-300 border ${!scrolled && isHome
+                                ? (theme === 'dark'
+                                    ? 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                                    : 'bg-blue-900/10 border-blue-900/20 text-blue-950 hover:bg-blue-900/20')
+                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200/50 dark:border-gray-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                }`}
+                        >
+                            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        </button>
+
+                        {currentUser && (
+                            <div className="flex items-center gap-3 pl-4 border-l border-gray-200/50 dark:border-gray-800/50">
+                                <Link to="/profile" className="flex items-center gap-3 group">
+                                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white dark:ring-gray-800 shadow-lg group-hover:scale-110 transition-transform overflow-hidden">
+                                        {currentUser?.photoURL ? (
+                                            <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            currentUser?.email?.[0].toUpperCase()
+                                        )}
+                                    </div>
+                                    <div className="text-left hidden xl:block">
+                                        <p className={`text-sm font-black transition-colors ${isHome && !scrolled
+                                            ? (theme === 'dark' ? 'text-white' : 'text-blue-950')
+                                            : 'text-gray-900 dark:text-white'
+                                            }`}>
+                                            {currentUser?.email?.split('@')[0]}
+                                        </p>
+                                        <p className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Premium</p>
+                                    </div>
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className={`p-3 rounded-2xl transition-all duration-300 border ${!scrolled && isHome
+                                        ? (theme === 'dark'
+                                            ? 'bg-red-500/10 border-red-500/20 text-red-100 hover:bg-red-500/20'
+                                            : 'bg-red-600/10 border-red-600/20 text-red-700 hover:bg-red-600/20')
+                                        : 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30'
+                                        }`}
+                                    title="Sign Out"
+                                >
+                                    <LogOut size={20} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mobile Only: Menu Toggle */}
+                    <div className="lg:hidden flex items-center gap-3">
+                        <button
+                            onClick={toggleTheme}
+                            className={`p-2.5 rounded-xl border transition-all duration-300 ${!scrolled && isHome
+                                ? (theme === 'dark'
+                                    ? 'bg-white/10 border-white/20 text-white'
+                                    : 'bg-blue-900/10 border-blue-900/20 text-blue-950')
+                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200/50 dark:border-gray-800/50 text-gray-600 dark:text-gray-400'
+                                }`}
+                        >
+                            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                        </button>
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className={`p-2.5 rounded-xl border transition-all duration-300 ${!scrolled && isHome
+                                ? (theme === 'dark'
+                                    ? 'bg-white/10 border-white/20 text-white'
+                                    : 'bg-blue-900/10 border-blue-900/20 text-blue-950')
+                                : 'bg-gray-50 dark:bg-gray-900 border-gray-200/50 dark:border-gray-800/50 text-gray-600 dark:text-gray-400'
+                                }`}
+                        >
+                            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                        </button>
+                    </div>
+                </div>
+            </nav>
+
+            {/* Mobile Sidebar Overlay */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
                     <>
@@ -205,41 +313,67 @@ export default function Layout({ children }) {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+                            className="lg:hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[150]"
                         />
                         <motion.div
-                            initial={{ x: '-100%' }}
+                            initial={{ x: '100%' }}
                             animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
+                            exit={{ x: '100%' }}
                             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="md:hidden fixed inset-y-0 left-0 w-[280px] bg-white dark:bg-gray-900 z-50 shadow-2xl"
+                            className="lg:hidden fixed inset-y-0 right-0 w-[300px] bg-white dark:bg-[#0a0a0b] z-[200] p-8 shadow-2xl flex flex-col"
                         >
-                            <SidebarContent
-                                navItems={navItems}
-                                location={location}
-                                setIsMobileMenuOpen={setIsMobileMenuOpen}
-                                unreadCount={unreadCount}
-                                toggleTheme={toggleTheme}
-                                theme={theme}
-                                currentUser={currentUser}
-                                handleLogout={handleLogout}
-                            />
+                            <div className="flex items-center gap-3 mb-12">
+                                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg">M</div>
+                                <span className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Mini Mart.</span>
+                            </div>
+
+                            <div className="flex-1 space-y-4">
+                                {navItems.map((item) => (
+                                    <NavLink
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={({ isActive }) => `flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${isActive
+                                            ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30'
+                                            : 'bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400'
+                                            }`}
+                                    >
+                                        <item.icon size={20} />
+                                        {item.name}
+                                        {item.name === 'Messages' && unreadCount > 0 && (
+                                            <span className="ml-auto bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{unreadCount}</span>
+                                        )}
+                                    </NavLink>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-4 px-6 py-4 rounded-2xl bg-red-50 dark:bg-red-900/10 text-red-600 font-bold transition-all"
+                            >
+                                <LogOut size={20} />
+                                Sign Out
+                            </button>
                         </motion.div>
                     </>
                 )}
             </AnimatePresence>
 
-            {/* Main Content */}
-            <main className="flex-1 min-w-0 md:p-8 p-4 pt-20 md:pt-8">
-                <motion.div
-                    key={location.pathname}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="max-w-6xl mx-auto"
-                >
-                    {children}
-                </motion.div>
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col pt-0">
+                <div className="flex-1">
+                    <motion.div
+                        key={location.pathname}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        {children}
+                    </motion.div>
+                </div>
+
+                {/* Global Footer - Hidden on Chat page for app-like fee */}
+                {location.pathname !== '/chat' && <Footer />}
             </main>
         </div>
     );

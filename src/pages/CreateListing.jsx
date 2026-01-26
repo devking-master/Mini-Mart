@@ -177,19 +177,19 @@ export default function CreateListing() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Sell an Item</h1>
-                <p className="text-gray-500 dark:text-gray-400">Reach buyers in your community.</p>
+        <div className="max-w-5xl mx-auto pb-20 pt-32 px-6">
+            <div className="mb-12">
+                <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">List an Item.</h1>
+                <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg font-medium">Connect with buyers in your community instantly.</p>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8">
                 {/* Form Section */}
-                <div className="flex-1 space-y-6">
+                <div className="flex-1 space-y-8">
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 space-y-4 transition-colors"
+                        className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 space-y-6 transition-all"
                     >
                         <div>
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
@@ -260,7 +260,7 @@ export default function CreateListing() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 transition-colors"
+                        className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 transition-all"
                     >
                         <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">
                             <ImageIcon size={16} /> Photos
@@ -270,12 +270,12 @@ export default function CreateListing() {
                 </div>
 
                 {/* Map Section */}
-                <div className="w-full lg:w-1/3 space-y-6">
+                <div className="w-full lg:w-[400px] space-y-8">
                     <motion.div
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-96 flex flex-col transition-colors"
+                        className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 h-[500px] flex flex-col transition-all"
                     >
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -338,9 +338,9 @@ export default function CreateListing() {
                     <button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 px-6 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full bg-blue-600 dark:bg-blue-600 text-white font-black py-5 px-6 rounded-3xl hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg"
                     >
-                        {loading && <Loader className="animate-spin" size={20} />}
+                        {loading && <Loader className="animate-spin" size={24} />}
                         {loading ? "Publishing..." : "Publish Listing"}
                     </button>
                 </div>
