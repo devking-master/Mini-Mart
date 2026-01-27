@@ -245,7 +245,7 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
                         <div className="relative z-10 mb-8">
                             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl bg-gray-800 flex items-center justify-center text-4xl font-bold">
                                 {targetUser.name?.[0]?.toUpperCase()}
-                                {remoteStreamRef.current && (
+                                {hasRemoteStream && (
                                     <div className="absolute inset-0 bg-blue-500/10 animate-pulse" />
                                 )}
                             </div>
