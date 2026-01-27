@@ -30,6 +30,13 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
         let unsubCall = null;
         let unsubSignals = null;
 
+        // Ensure we have a session ID
+        if (!callSessionId) {
+            console.error("No call session ID provided");
+            onClose();
+            return;
+        }
+
         const initPeer = async () => {
             const constraints = {
                 audio: true,
@@ -46,11 +53,15 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
                 const callDocRef = doc(db, "chats", chatId, "calls", "active_call");
-                const callerSignals = collection(callDocRef, "callerSignals");
-                const calleeSignals = collection(callDocRef, "calleeSignals");
+
+                // Use a unique path for THIS call session's signals
+                // Pattern: chats/{chatId}/calls/{active_call}/sessions/{callSessionId}/callerSignals
+                // This ensures we don't read old signals from previous attempts
+                const sessionRef = doc(db, "chats", chatId, "calls", "active_call", "sessions", callSessionId);
+                const callerSignals = collection(sessionRef, "callerSignals");
+                const calleeSignals = collection(sessionRef, "calleeSignals");
 
                 // Use the prop to determine if we are the initiator
-                // This avoids async race conditions with getDoc
                 const amInitiator = amInitiatorProp;
 
                 const peer = new Peer({
@@ -81,25 +92,25 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
 
                 peer.on('error', err => {
                     console.error("Peer error:", err);
-                    // Don't close immediately on non-fatal errors, but for SDP mismatch we might have to
                 });
 
                 peer.on('close', () => onClose());
 
                 if (amInitiator) {
                     setStatus("calling");
-                    // Create call doc
+                    // Create/Update call doc with the session ID
                     await setDoc(callDocRef, {
                         callerId: currentUser.uid,
                         callerName: currentUser.displayName || currentUser.email.split('@')[0],
                         calleeId: targetUser.uid,
                         calleeName: targetUser.name,
                         callType,
+                        callSessionId, // Store the session ID so callee knows where to look
                         status: "offering",
                         createdAt: serverTimestamp()
                     });
 
-                    // Listen for callee signals
+                    // Listen for callee signals on THIS session
                     unsubSignals = onSnapshot(query(calleeSignals, orderBy("timestamp", "asc")), (snapshot) => {
                         snapshot.docChanges().forEach(change => {
                             if (change.type === 'added') {
@@ -110,7 +121,7 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
                     });
                 } else {
                     setStatus("connecting");
-                    // Listen for caller signals
+                    // Listen for caller signals on THIS session
                     unsubSignals = onSnapshot(query(callerSignals, orderBy("timestamp", "asc")), (snapshot) => {
                         snapshot.docChanges().forEach(change => {
                             if (change.type === 'added') {
@@ -141,7 +152,7 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
             if (unsubCall) unsubCall();
             if (unsubSignals) unsubSignals();
         };
-    }, [chatId, currentUser.uid, currentUser.displayName, currentUser.email, targetUser.uid, targetUser.name, callType, onClose, amInitiatorProp]);
+    }, [chatId, currentUser.uid, currentUser.displayName, currentUser.email, targetUser.uid, targetUser.name, callType, onClose, amInitiatorProp, callSessionId]);
 
     const toggleMute = () => {
         if (localStreamRef.current) {

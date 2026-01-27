@@ -203,6 +203,7 @@ export default function Chat() {
             callerName: currentUser.displayName || currentUser.email.split('@')[0],
             calleeId: selectedChat.participants[otherIndex],
             calleeName: selectedChat.participantNames[otherIndex],
+            callSessionId: crypto.randomUUID(),
             status: "offering"
         });
         setInCall(true);
