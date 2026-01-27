@@ -63,8 +63,30 @@ export default function Chat() {
     useEffect(() => {
         if (location.state?.targetUser) {
             const { targetUser } = location.state;
+
+            // 1. Sort UIDs to ensure consistent Chat ID
             const participants = [currentUser.uid, targetUser.uid].sort();
             const chatId = participants.join('_');
+
+            // 2. Prepare metadata objects for alignment
+            // We create a map or key-value pair to easily pull data in the correct order
+            const userDataMap = {
+                [currentUser.uid]: {
+                    name: currentUser.displayName || currentUser.email.split('@')[0],
+                    email: currentUser.email,
+                    photo: currentUser.photoURL || null
+                },
+                [targetUser.uid]: {
+                    name: targetUser.displayName || targetUser.email.split('@')[0],
+                    email: targetUser.email,
+                    photo: targetUser.photoURL || null
+                }
+            };
+
+            // 3. Construct ordered arrays based on the sorted UIDs
+            const orderedNames = participants.map(uid => userDataMap[uid].name);
+            const orderedEmails = participants.map(uid => userDataMap[uid].email);
+            const orderedPhotos = participants.map(uid => userDataMap[uid].photo);
 
             const existingChat = chats.find(c => c.id === chatId);
 
@@ -74,12 +96,9 @@ export default function Chat() {
                 setSelectedChat({
                     id: chatId,
                     participants: participants,
-                    participantEmails: [currentUser.email, targetUser.email],
-                    participantNames: [
-                        currentUser.displayName || currentUser.email.split('@')[0],
-                        targetUser.displayName || targetUser.email.split('@')[0]
-                    ],
-                    participantPhotos: [currentUser.photoURL || null, targetUser.photoURL || null],
+                    participantEmails: orderedEmails,
+                    participantNames: orderedNames,
+                    participantPhotos: orderedPhotos,
                     listingData: location.state?.listingData || null,
                     isNew: true
                 });
