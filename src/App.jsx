@@ -11,9 +11,6 @@ import Profile from "./pages/Profile";
 
 import Layout from "./components/Layout";
 
-import { CallProvider } from "./context/CallContext";
-import GlobalCallUI from "./GlobalCallUI";
-
 function PrivateRoute({ children }) {
   const { currentUser } = useAuth();
   return currentUser ? (
@@ -29,46 +26,43 @@ function App() {
     <Router>
       <ThemeProvider>
         <AuthProvider>
-          <CallProvider>
-            <GlobalCallUI />
-            <div className="min-h-screen transition-colors duration-300">
+          <div className="min-h-screen transition-colors duration-300">
 
 
-              <Routes>
+            <Routes>
 
-                {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+              {/* Public Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-                {/* Protected Routes */}
-                <Route path="/" element={
-                  <PrivateRoute>
-                    <Home />
-                  </PrivateRoute>
-                } />
-                <Route path="/create-listing" element={
-                  <PrivateRoute>
-                    <CreateListing />
-                  </PrivateRoute>
-                } />
-                <Route path="/listing/:id" element={
-                  <PrivateRoute>
-                    <ListingDetail />
-                  </PrivateRoute>
-                } />
-                <Route path="/profile" element={
-                  <PrivateRoute>
-                    <Profile />
-                  </PrivateRoute>
-                } />
-                <Route path="/chat" element={
-                  <PrivateRoute>
-                    <Chat />
-                  </PrivateRoute>
-                } />
-              </Routes>
-            </div>
-          </CallProvider>
+              {/* Protected Routes */}
+              <Route path="/" element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              } />
+              <Route path="/create-listing" element={
+                <PrivateRoute>
+                  <CreateListing />
+                </PrivateRoute>
+              } />
+              <Route path="/listing/:id" element={
+                <PrivateRoute>
+                  <ListingDetail />
+                </PrivateRoute>
+              } />
+              <Route path="/profile" element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              } />
+              <Route path="/chat" element={
+                <PrivateRoute>
+                  <Chat />
+                </PrivateRoute>
+              } />
+            </Routes>
+          </div>
         </AuthProvider>
       </ThemeProvider>
     </Router>
