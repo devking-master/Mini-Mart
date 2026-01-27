@@ -29,20 +29,49 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
         const callDocRef = doc(db, "chats", chatId, "calls", "active_call");
 
         const unsub = onSnapshot(callDocRef, (snap) => {
+            // Case 1: Document doesn't exist
             if (!snap.exists()) {
+                // If we are the caller and haven't started the session, create the doc now.
+                if (amInitiatorProp && !hasRotatedSession.current) {
+                    hasRotatedSession.current = true;
+                    const newSessionId = crypto.randomUUID(); // Generate fresh Session ID
+
+                    // Create the active_call document with full metadata
+                    setDoc(callDocRef, {
+                        callSessionId: newSessionId,
+                        callerId: currentUser.uid,
+                        callerName: currentUser.displayName || currentUser.email.split('@')[0],
+                        calleeId: targetUser.uid,
+                        calleeName: targetUser.name || 'User',
+                        callType: callType,
+                        status: 'offering',
+                        timestamp: serverTimestamp()
+                    });
+                    return;
+                }
+
+                // Otherwise, if we differ or are receiver, the call is dead.
                 onClose();
                 return;
             }
+
+            // Case 2: Document exists
             const data = snap.data();
 
-            // If we are caller and haven't rotated yet, do it now.
-            // This ensures every mount gets a fresh signaling channel.
+            // If we are caller and haven't rotated yet (e.g. overwriting an old doc), do it now.
             if (amInitiatorProp && !hasRotatedSession.current) {
                 hasRotatedSession.current = true;
                 const newSessionId = crypto.randomUUID();
-                // We don't set state here, we write to DB. 
-                // The snapshot will fire again with the new ID.
-                setDoc(callDocRef, { callSessionId: newSessionId }, { merge: true });
+                setDoc(callDocRef, {
+                    callSessionId: newSessionId,
+                    callerId: currentUser.uid,
+                    callerName: currentUser.displayName || currentUser.email.split('@')[0],
+                    calleeId: targetUser.uid,
+                    calleeName: targetUser.name || 'User',
+                    callType: callType,
+                    status: 'offering',
+                    timestamp: serverTimestamp()
+                }, { merge: true });
             } else if (data.callSessionId) {
                 // If ID matches what we expect (or we are receiver), accept it
                 setCurrentSessionId(data.callSessionId);
