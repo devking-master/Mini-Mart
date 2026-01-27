@@ -85,6 +85,10 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
     useEffect(() => {
         if (!currentSessionId) return;
 
+        // Reset state on new session
+        setHasRemoteStream(false);
+        setStatus("initializing");
+
         console.log("Initializing Peer with Session:", currentSessionId);
         let canceled = false;
         let unsubSignals = null;
@@ -123,7 +127,7 @@ export default function VideoCall({ chatId, currentUser, targetUser, callType = 
 
                 const peer = new Peer({
                     initiator: amInitiator,
-                    trickle: true,
+                    trickle: false, // Disable trickle ICE to simplify signaling (avoids race conditions)
                     stream: stream,
                     config: { iceServers }
                 });
