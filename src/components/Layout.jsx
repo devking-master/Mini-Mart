@@ -1,3 +1,8 @@
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, MessageSquare, PlusCircle, User, Moon, Sun, LogOut, Menu, X, Bell, LayoutGrid, Search, ArrowRight } from 'lucide-react';
@@ -71,7 +76,7 @@ export default function Layout({ children }) {
                         const senderPhoto = data.participantPhotos[1 - data.participants.indexOf(currentUser.uid)];
 
                         // Browser Notification
-                        if (Document.visibilityState !== 'visible' && Notification.permission === "granted") {
+                        if (document.visibilityState !== 'visible' && Notification.permission === "granted") {
                             new Notification(`New Message from ${senderName}`, {
                                 body: messageText,
                                 icon: senderPhoto || '/vite.svg'
