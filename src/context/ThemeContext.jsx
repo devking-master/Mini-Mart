@@ -19,7 +19,6 @@ export function ThemeProvider({ children }) {
             document.body.classList.remove('dark');
         }
         localStorage.setItem('theme', theme);
-        console.log('Theme changed to:', theme);
     }, [theme]);
 
 

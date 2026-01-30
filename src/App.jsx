@@ -9,7 +9,21 @@ import ListingDetail from "./pages/ListingDetail";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 
+import ScrollToTop from "./components/ScrollToTop";
+
+// Footer Pages
+import SellingGuide from "./pages/SellingGuide";
+import Safety from "./pages/Safety";
+import Sellers from "./pages/Sellers";
+import Categories from "./pages/Categories";
+import HelpCenter from "./pages/HelpCenter";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Cookies from "./pages/Cookies";
+import Refunds from "./pages/Refunds";
+
 import Layout from "./components/Layout";
+import NotFound from "./pages/NotFound";
 
 function PrivateRoute({ children }) {
   const { currentUser } = useAuth();
@@ -24,6 +38,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <ThemeProvider>
         <AuthProvider>
           <div className="min-h-screen transition-colors duration-300">
@@ -34,6 +49,17 @@ function App() {
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+
+              {/* Footer Pages (Public) */}
+              <Route path="/selling-guide" element={<Layout><SellingGuide /></Layout>} />
+              <Route path="/safety" element={<Layout><Safety /></Layout>} />
+              <Route path="/sellers" element={<Layout><Sellers /></Layout>} />
+              <Route path="/categories" element={<Layout><Categories /></Layout>} />
+              <Route path="/help" element={<Layout><HelpCenter /></Layout>} />
+              <Route path="/terms" element={<Layout><Terms /></Layout>} />
+              <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+              <Route path="/cookies" element={<Layout><Cookies /></Layout>} />
+              <Route path="/refunds" element={<Layout><Refunds /></Layout>} />
 
               {/* Protected Routes */}
               <Route path="/" element={
@@ -61,6 +87,7 @@ function App() {
                   <Chat />
                 </PrivateRoute>
               } />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
         </AuthProvider>

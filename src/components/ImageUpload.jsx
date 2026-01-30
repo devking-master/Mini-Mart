@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Upload, X, Image as ImageIcon, CheckCircle, Loader } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, CheckCircle, Loader, RefreshCw } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 
 const IMGBB_API_KEY = "5c96460dbce35dbdb36e2e26b2dad63e";
 
 export default function ImageUpload({ onUploadComplete }) {
     const [uploading, setUploading] = useState(false);
+    const [compressing, setCompressing] = useState(false);
     const [previews, setPreviews] = useState([]);
     const [uploadedUrls, setUploadedUrls] = useState([]); // Array of uploaded URLs
     const [error, setError] = useState("");
@@ -14,42 +16,69 @@ export default function ImageUpload({ onUploadComplete }) {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        // Generate previews
+        // Generate previews immediately for better UX
         const newPreviews = files.map(file => URL.createObjectURL(file));
         setPreviews(prev => [...prev, ...newPreviews]);
         setError("");
-        setUploading(true);
 
-        const uploadPromises = files.map(async (file) => {
-            const formData = new FormData();
-            formData.append("image", file);
-            formData.append("key", IMGBB_API_KEY);
-
-            try {
-                const response = await axios.post("https://api.imgbb.com/1/upload", formData);
-                return response.data.data.display_url;
-            } catch (err) {
-                console.error("Upload failed for file:", file.name, err);
-                return null;
-            }
-        });
+        // We'll track progress locally to update parent incrementally
+        let currentUrls = [...uploadedUrls];
 
         try {
-            const results = await Promise.all(uploadPromises);
-            const successfulUrls = results.filter(url => url !== null);
+            // SEQUENTIAL UPLOAD LOOP (Fix for timeouts)
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                try {
+                    // 1. Compress Image
+                    setCompressing(true);
+                    setUploading(false);
 
-            if (successfulUrls.length < files.length) {
-                setError(`Failed to upload ${files.length - successfulUrls.length} images.`);
+                    const options = {
+                        maxSizeMB: 0.8, // Compress slightly more (0.8MB)
+                        maxWidthOrHeight: 1920,
+                        useWebWorker: true,
+                    };
+
+                    const compressedFile = await imageCompression(file, options);
+
+                    setCompressing(false);
+                    setUploading(true); // Switch status to uploading
+
+                    // 2. Upload to ImgBB
+                    const formData = new FormData();
+                    formData.append("image", compressedFile);
+                    formData.append("key", IMGBB_API_KEY);
+
+                    const response = await axios.post("https://api.imgbb.com/1/upload", formData, {
+                        timeout: 120000 // Increased timeout to 120s
+                    });
+
+                    const url = response.data.data.display_url;
+
+                    // Update local tracker
+                    currentUrls.push(url);
+
+                    // Update State & Parent
+                    setUploadedUrls([...currentUrls]);
+                    onUploadComplete([...currentUrls]);
+
+                } catch (err) {
+                    console.error("Upload/Compression failed for file:", file.name, err);
+                    setError(`Failed to upload ${file.name}. Please try again.`);
+                    // Continue to next file even if one fails
+                }
             }
 
-            const allUrls = [...uploadedUrls, ...successfulUrls];
-            setUploadedUrls(allUrls);
-            onUploadComplete(allUrls); // Pass accumulated URLs to parent
+            if (currentUrls.length < (uploadedUrls.length + files.length)) {
+                // Check if any failed? Not perfect check but okay.
+            }
+
         } catch (err) {
             console.error("Batch upload error:", err);
             setError("Unexpected error during upload.");
         } finally {
             setUploading(false);
+            setCompressing(false);
         }
     };
 
@@ -71,13 +100,15 @@ export default function ImageUpload({ onUploadComplete }) {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                     accept="image/*"
                     onChange={handleFileChange}
-                    disabled={uploading}
+                    disabled={uploading || compressing}
                 />
 
-                {uploading ? (
+                {uploading || compressing ? (
                     <div className="flex flex-col items-center text-blue-600">
                         <Loader className="animate-spin mb-2" size={32} />
-                        <span className="font-medium">Uploading images...</span>
+                        <span className="font-medium">
+                            {compressing ? "Compressing..." : `Uploading image ${uploadedUrls.length + 1}...`}
+                        </span>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center text-gray-500">
@@ -86,7 +117,7 @@ export default function ImageUpload({ onUploadComplete }) {
                         </div>
                         <span className="font-bold text-gray-900">Click to upload images</span>
                         <span className="text-sm mt-1">or drag and drop here</span>
-                        <span className="text-xs text-gray-400 mt-2">SVG, PNG, JPG or GIF (max. 32MB)</span>
+                        <span className="text-xs text-gray-400 mt-2">SVG, PNG, JPG (max 32MB)</span>
                     </div>
                 )}
             </div>
@@ -113,7 +144,12 @@ export default function ImageUpload({ onUploadComplete }) {
                             >
                                 <X size={14} />
                             </button>
-                            {/* Success Indicator */}
+                            {/* Status Indicators */}
+                            {!uploadedUrls[index] && (uploading || compressing) && (
+                                <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                                    <Loader className="animate-spin text-blue-600" size={24} />
+                                </div>
+                            )}
                             {uploadedUrls[index] && (
                                 <div className="absolute bottom-1 right-1 text-green-500 bg-white rounded-full p-0.5 shadow-sm">
                                     <CheckCircle size={16} fill="white" className="text-green-500" />

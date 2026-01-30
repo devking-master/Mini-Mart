@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { Search, MessageSquare, PlusCircle, LogOut, User, Menu, X, ShoppingBag, Sun, Moon, Bell } from 'lucide-react';
-import { db } from '../firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingBag, MessageSquare, PlusCircle, User, Moon, Sun, LogOut, Menu, X, Bell, LayoutGrid, Search, ArrowRight } from 'lucide-react';
 import Footer from './Footer';
 
 export default function Layout({ children }) {
@@ -32,8 +27,17 @@ export default function Layout({ children }) {
         }
     };
 
-    // Calculate unread messages
+    // Message Notifications State
     const [unreadCount, setUnreadCount] = useState(0);
+    const [activeToast, setActiveToast] = useState(null);
+    const prevChatsRef = React.useRef({});
+
+    // Request browser notification permission
+    useEffect(() => {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }, []);
 
     useEffect(() => {
         if (!currentUser) return;
@@ -45,17 +49,56 @@ export default function Layout({ children }) {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             let totalUnread = 0;
+            const currentChats = {};
+
             snapshot.docs.forEach(doc => {
                 const data = doc.data();
+                const chatId = doc.id;
+                currentChats[chatId] = data;
+
                 if (data.unreadCounts && data.unreadCounts[currentUser.uid]) {
-                    totalUnread += data.unreadCounts[currentUser.uid];
+                    const count = data.unreadCounts[currentUser.uid];
+                    totalUnread += count;
+
+                    // Detect new message arrival
+                    const prevData = prevChatsRef.current[chatId];
+                    const prevCount = prevData?.unreadCounts?.[currentUser.uid] || 0;
+
+                    // If unread count increased and we aren't currently in this chat
+                    if (count > prevCount && location.pathname !== '/chat') {
+                        const senderName = data.participantNames[1 - data.participants.indexOf(currentUser.uid)];
+                        const messageText = data.lastMessage || "Sent you a message";
+                        const senderPhoto = data.participantPhotos[1 - data.participants.indexOf(currentUser.uid)];
+
+                        // Browser Notification
+                        if (Document.visibilityState !== 'visible' && Notification.permission === "granted") {
+                            new Notification(`New Message from ${senderName}`, {
+                                body: messageText,
+                                icon: senderPhoto || '/vite.svg'
+                            });
+                        }
+
+                        // In-App Toast
+                        setActiveToast({
+                            id: Date.now(),
+                            senderName,
+                            messageText,
+                            senderPhoto,
+                            chatId
+                        });
+
+                        // Auto-hide toast after 5 seconds
+                        setTimeout(() => setActiveToast(null), 5000);
+                    }
                 }
             });
+
             setUnreadCount(totalUnread);
+            prevChatsRef.current = currentChats;
         });
 
         return unsubscribe;
-    }, [currentUser]);
+    }, [currentUser, location.pathname]);
 
     const navItems = [
         { name: 'Browse', path: '/', icon: ShoppingBag },
@@ -303,6 +346,40 @@ export default function Layout({ children }) {
                     </div>
                 </div>
             </nav>
+
+            {/* In-App Notification Toast */}
+            <AnimatePresence>
+                {activeToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, x: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                        onClick={() => {
+                            navigate('/chat');
+                            setActiveToast(null);
+                        }}
+                        className="fixed top-24 right-6 z-[200] max-w-sm w-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-4 flex items-center gap-4 cursor-pointer hover:border-blue-500/50 transition-all border-l-4 border-l-blue-600 group"
+                    >
+                        <div className="w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                            {activeToast.senderPhoto ? (
+                                <img src={activeToast.senderPhoto} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center font-bold text-gray-400">
+                                    {activeToast.senderName[0]}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">New Message</p>
+                            <h4 className="font-bold text-gray-900 dark:text-white text-sm leading-none mb-1">{activeToast.senderName}</h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate font-medium">{activeToast.messageText}</p>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-all">
+                            <ArrowRight size={14} />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Mobile Sidebar Overlay */}
             <AnimatePresence>

@@ -8,6 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageCircle, Trash2, ArrowLeft, MapPin, Calendar, ChevronLeft, ChevronRight, Share2, ShieldCheck, Zap } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 // Fix Leaflet marker icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -70,10 +71,20 @@ export default function ListingDetail() {
         });
     };
 
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
     const handleDelete = async () => {
-        if (window.confirm("Are you sure you want to delete this listing?")) {
+        setDeleting(true);
+        try {
             await deleteDoc(doc(db, "listings", id));
             navigate("/");
+        } catch (error) {
+            console.error("Error deleting listing:", error);
+            // Optionally set an error state here too
+        } finally {
+            setDeleting(false);
+            setShowDeleteModal(false);
         }
     };
 
@@ -280,7 +291,7 @@ export default function ListingDetail() {
                                         </button>
                                     ) : (
                                         <button
-                                            onClick={handleDelete}
+                                            onClick={() => setShowDeleteModal(true)}
                                             className="w-full bg-red-50 dark:bg-red-900/10 text-red-600 font-bold py-4 rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/20 transition-all flex items-center justify-center gap-2 text-sm"
                                         >
                                             <Trash2 size={16} />
@@ -294,6 +305,17 @@ export default function ListingDetail() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleDelete}
+                title="Delete Listing"
+                message="Are you sure you want to remove this listing? This action cannot be undone."
+                confirmText="Yes, Delete it"
+                isDestructive={true}
+                loading={deleting}
+            />
         </div>
     );
 }

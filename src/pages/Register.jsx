@@ -51,7 +51,7 @@ export default function Register() {
             });
 
             // Update profile with username
-            await updateUserProfile(userCredential.user, {
+            await updateUserProfile({
                 displayName: username
             });
 

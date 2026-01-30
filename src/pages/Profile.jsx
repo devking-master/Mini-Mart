@@ -3,9 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
-import { User, Package, Calendar, MapPin, ArrowRight, Plus, Camera, Loader } from 'lucide-react';
+import { User, Package, Calendar, MapPin, ArrowRight, Plus, Camera, Loader, Edit2, Save, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
+import AlertModal from '../components/AlertModal';
 
 const IMGBB_API_KEY = "5c96460dbce35dbdb36e2e26b2dad63e";
 
@@ -14,6 +15,44 @@ export default function Profile() {
     const [myListings, setMyListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+
+    const [alertState, setAlertState] = useState({ isOpen: false, title: "", message: "", type: "error" });
+
+    // Name Editing State
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [newName, setNewName] = useState(currentUser?.displayName || "");
+
+    useEffect(() => {
+        if (currentUser?.displayName) {
+            setNewName(currentUser.displayName);
+        }
+    }, [currentUser]);
+
+    const handleSaveName = async () => {
+        if (!newName.trim() || newName === currentUser?.displayName) {
+            setIsEditingName(false);
+            return;
+        }
+
+        try {
+            await updateUserProfile({ displayName: newName });
+            setAlertState({
+                isOpen: true,
+                title: "Nice to meet you!",
+                message: "Your username has been updated successfully.",
+                type: "success"
+            });
+            setIsEditingName(false);
+        } catch (err) {
+            console.error("Failed to update name:", err);
+            setAlertState({
+                isOpen: true,
+                title: "Update Failed",
+                message: "Could not update your username. Please try again.",
+                type: "error"
+            });
+        }
+    };
 
     useEffect(() => {
         async function fetchMyListings() {
@@ -48,10 +87,21 @@ export default function Profile() {
         try {
             const response = await axios.post("https://api.imgbb.com/1/upload", formData);
             const imageUrl = response.data.data.display_url;
-            await updateUserProfile(currentUser, { photoURL: imageUrl });
+            await updateUserProfile({ photoURL: imageUrl });
+            setAlertState({
+                isOpen: true,
+                title: "Profile Updated",
+                message: "Your profile picture has been updated successfully!",
+                type: "success"
+            });
         } catch (err) {
             console.error("Failed to upload profile picture:", err);
-            alert("Failed to update profile picture.");
+            setAlertState({
+                isOpen: true,
+                title: "Upload Failed",
+                message: "Failed to update profile picture. Please try again.",
+                type: "error"
+            });
         }
         setUploading(false);
     };
@@ -70,51 +120,101 @@ export default function Profile() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-12 pt-32 pb-32 px-6">
+        <div className="max-w-5xl mx-auto space-y-8 md:space-y-10 pt-20 md:pt-28 pb-20 md:pb-28 px-4 md:px-6">
             {/* Profile Header */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-900 rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 transition-all duration-500"
+                className="bg-white dark:bg-gray-900 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 relative group"
             >
-                <div className="h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
-                    <div className="absolute -bottom-16 left-12">
-                        <div className="relative group">
-                            <div className="w-36 h-36 bg-white dark:bg-gray-900 rounded-[2rem] p-1.5 shadow-2xl transition-all">
-                                <div className="w-full h-full bg-gray-100 dark:bg-gray-800 rounded-[1.5rem] flex items-center justify-center overflow-hidden border-2 border-gray-50 dark:border-gray-700">
+                {/* Decorative Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20 opacity-50" />
+
+                <div className="h-40 md:h-48 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')] bg-cover bg-center relative">
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/90 dark:to-gray-900/90" />
+
+                    <div className="absolute -bottom-14 md:-bottom-16 left-0 md:left-12 w-full md:w-auto flex flex-col md:flex-row items-center md:items-end gap-3 md:gap-6 z-20 px-4 md:px-0">
+                        {/* Avatar */}
+                        <div className="relative group/avatar">
+                            <div className="w-28 h-28 md:w-36 md:h-36 bg-white dark:bg-gray-900 rounded-[1.75rem] md:rounded-[2.25rem] p-1 shadow-2xl md:rotate-2 group-hover/avatar:rotate-0 transition-all duration-300">
+                                <div className="w-full h-full bg-gray-100 dark:bg-gray-800 rounded-[1.25rem] md:rounded-[1.75rem] flex items-center justify-center overflow-hidden border-2 border-gray-50 dark:border-gray-700 relative">
                                     {currentUser?.photoURL ? (
                                         <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
-                                        <div className="text-5xl text-gray-300 dark:text-gray-600 font-black tracking-tighter">
+                                        <div className="text-3xl md:text-4xl text-gray-300 dark:text-gray-600 font-black tracking-tighter">
                                             {currentUser?.email?.[0].toUpperCase()}
+                                        </div>
+                                    )}
+
+                                    {/* Loading Overlay */}
+                                    {uploading && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                                            <Loader className="animate-spin text-white" size={20} />
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Upload Overlay */}
-                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-[2rem] opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-300">
-                                {uploading ? <Loader className="animate-spin text-white" size={32} /> : <Camera className="text-white" size={32} />}
+                            {/* Upload Button */}
+                            <label className="absolute bottom-1 right-1 md:bottom-2 md:right-2 flex items-center justify-center w-7 h-7 md:w-9 md:h-9 bg-blue-600 text-white rounded-lg md:rounded-xl shadow-lg cursor-pointer hover:bg-blue-700 hover:scale-110 transition-all z-10">
+                                <Camera size={12} className="md:size-16" />
                                 <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} disabled={uploading} />
                             </label>
                         </div>
+
+                        {/* User Info - Editable */}
+                        <div className="mb-0 md:mb-2 relative z-10 text-center md:text-left w-full md:w-auto">
+                            <div className="flex flex-col md:flex-row items-center gap-1.5 md:gap-3 mb-0.5">
+                                {isEditingName ? (
+                                    <div className="flex items-center gap-2 bg-white/50 dark:bg-black/80 backdrop-blur-md p-1 rounded-xl border border-blue-200 dark:border-blue-800 w-full md:w-auto">
+                                        <input
+                                            type="text"
+                                            value={newName}
+                                            onChange={(e) => setNewName(e.target.value)}
+                                            className="bg-transparent border-none outline-none text-lg md:text-xl font-black text-gray-900 dark:text-white flex-1 md:w-40 px-2"
+                                            autoFocus
+                                        />
+                                        <div className="flex gap-1">
+                                            <button onClick={handleSaveName} className="p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                                <Save size={14} />
+                                            </button>
+                                            <button onClick={() => setIsEditingName(false)} className="p-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors">
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <h1 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter truncate max-w-[180px] md:max-w-none">
+                                            {currentUser?.displayName || currentUser?.email?.split('@')[0]}
+                                        </h1>
+                                        <button onClick={() => setIsEditingName(true)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all">
+                                            <Edit2 size={14} className="md:size-18" />
+                                        </button>
+                                    </div>
+                                )}
+                                <span className="px-2.5 py-0.5 bg-gradient-to-r from-blue-600 to-purple-600 text-[8px] md:text-[9px] font-black uppercase tracking-widest text-white rounded-full shadow-lg shadow-blue-500/20">Premium</span>
+                            </div>
+                            <p className="text-xs md:text-base text-gray-500 dark:text-gray-400 font-medium flex items-center justify-center md:justify-start gap-1.5">
+                                <span className="truncate max-w-[180px] md:max-w-none">{currentUser?.email}</span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <div className="pt-24 pb-12 px-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter">{currentUser?.displayName || currentUser?.email?.split('@')[0]}</h1>
-                            <span className="px-3 py-1 bg-blue-600 text-[10px] font-black uppercase tracking-widest text-white rounded-full">Premium Member</span>
+
+                <div className="pt-16 md:pt-20 pb-5 md:pb-6 px-4 md:px-12 flex flex-col md:flex-row justify-end items-center gap-4 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm relative z-0">
+                    <div className="flex flex-wrap justify-center md:justify-end gap-2.5 md:gap-4 w-full md:w-auto">
+                        <div className="bg-white dark:bg-gray-800 p-2.5 md:p-3 rounded-xl md:rounded-[1.25rem] border border-gray-100 dark:border-gray-700 shadow-sm flex-1 md:flex-none min-w-[90px] md:min-w-[120px] text-center md:text-left">
+                            <span className="block text-[7px] md:text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Status</span>
+                            <span className="text-base md:text-xl font-black text-gray-900 dark:text-white">Active</span>
                         </div>
-                        <p className="text-gray-500 dark:text-gray-400 font-medium text-lg">{currentUser?.email}</p>
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800/50 transition-all min-w-[160px]">
-                            <span className="block text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">Listings</span>
-                            <span className="text-3xl font-black text-blue-600 dark:text-blue-400">{myListings.length}</span>
+                        <div className="bg-white dark:bg-gray-800 p-2.5 md:p-3 rounded-xl md:rounded-[1.25rem] border border-gray-100 dark:border-gray-700 shadow-sm flex-1 md:flex-none min-w-[90px] md:min-w-[120px] text-center md:text-left">
+                            <span className="block text-[7px] md:text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Listings</span>
+                            <span className="text-base md:text-xl font-black text-blue-600 dark:text-blue-400">{myListings.length}</span>
                         </div>
-                        <Link to="/create-listing" className="bg-blue-600 text-white px-10 py-6 rounded-[2rem] font-black text-lg flex items-center gap-3 hover:bg-blue-700 hover:-translate-y-2 transition-all shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)]">
-                            <Plus size={24} /> New Item
+                        <Link to="/create-listing" className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 md:px-7 py-2.5 md:py-3 rounded-xl md:rounded-[1.25rem] font-black text-sm md:text-base flex items-center gap-2 hover:scale-105 transition-all shadow-xl w-full md:w-auto justify-center">
+                            <Plus size={18} /> New
                         </Link>
                     </div>
                 </div>
@@ -204,6 +304,13 @@ export default function Profile() {
                     </motion.div>
                 )}
             </div>
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+                title={alertState.title}
+                message={alertState.message}
+                type={alertState.type}
+            />
         </div>
     );
 }

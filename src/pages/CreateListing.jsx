@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import ImageUpload from '../components/ImageUpload';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap, LayersControl, Circle, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { motion } from 'framer-motion';
-import { DollarSign, Tag, Image as ImageIcon, MapPin, AlignLeft, Type, Loader, Crosshair } from 'lucide-react';
+import { DollarSign, Tag, Image as ImageIcon, MapPin, AlignLeft, Type, Loader, Crosshair, ArrowRight, UploadCloud } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
 // Fix Leaflet marker icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -134,7 +135,7 @@ export default function CreateListing() {
             },
             {
                 enableHighAccuracy: true,
-                timeout: 5000,
+                timeout: 15000,
                 maximumAge: 0
             }
         );
@@ -168,6 +169,40 @@ export default function CreateListing() {
                 userPhotoURL: currentUser.photoURL || null, // Save profile picture
                 createdAt: serverTimestamp(),
             });
+
+            // --- NEWSLETTER NOTIFICATION SIMULATION ---
+            // In a real app with EmailJS, you would fetch subscribers and trigger send
+            try {
+                const subscribersSnapshot = await getDocs(collection(db, "subscribers"));
+                const subscriberCount = subscribersSnapshot.size;
+
+                if (subscriberCount > 0) {
+                    // Send to EACH subscriber (Note: EmailJS Free tier has limits, so be careful with loops)
+                    subscribersSnapshot.docs.forEach((doc) => {
+                        const subData = doc.data();
+                        // Send email to subscriber
+                        emailjs.send(
+                            "service_jvxaw3m",
+                            "template_rrqm5tl",
+                            {
+                                to_email: subData.email,
+                                item_title: formData.title,
+                                item_price: formData.price,
+                                item_category: formData.category,
+                                item_link: window.location.origin
+                            },
+                            "DI7a1vO-5XVQKcNua" // Public Key
+                        ).then(
+                            // Notification sent
+                        );
+                    });
+
+                }
+            } catch (err) {
+                console.error("Error notifying subscribers:", err);
+            }
+            // -------------------------------------------
+
             navigate("/");
         } catch (err) {
             console.error("Error adding document: ", err);
@@ -177,173 +212,217 @@ export default function CreateListing() {
     };
 
     return (
-        <div className="max-w-5xl mx-auto pb-20 pt-32 px-6">
-            <div className="mb-12">
-                <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">List an Item.</h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-2 text-lg font-medium">Connect with buyers in your community instantly.</p>
-            </div>
-
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Form Section */}
-                <div className="flex-1 space-y-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+        <div className="min-h-screen bg-gray-50/50 dark:bg-[#0a0a0b] pb-20 pt-32 px-6">
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="mb-12 text-center md:text-left relative">
+                    <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 space-y-6 transition-all"
+                        className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter mb-4 relative z-10"
                     >
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                <Type size={16} /> Title
-                            </label>
-                            <input
-                                type="text"
-                                name="title"
-                                required
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 dark:text-white"
-                                placeholder="What are you selling?"
-                                value={formData.title}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                <AlignLeft size={16} /> Description
-                            </label>
-                            <textarea
-                                name="description"
-                                required
-                                rows="4"
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none text-gray-900 dark:text-white"
-                                placeholder="Describe the condition, features, etc..."
-                                value={formData.description}
-                                onChange={handleChange}
-                            ></textarea>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    ₦ Price
-                                </label>
-                                <input
-                                    type="number"
-                                    name="price"
-                                    required
-                                    min="0"
-                                    step="0.01"
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 dark:text-white"
-                                    placeholder="0.00"
-                                    value={formData.price}
-                                    onChange={handleChange}
-                                />
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                                    <Tag size={16} /> Category
-                                </label>
-                                <select
-                                    name="category"
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 dark:text-white"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                >
-                                    {["General", "Electronics", "Furniture", "Clothing", "Vehicles", "Books", "Services", "Other"].map(opt => (
-                                        <option key={opt} value={opt} className="bg-white dark:bg-gray-900">{opt}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        List an <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Item.</span>
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 transition-all"
+                        className="text-gray-500 dark:text-gray-400 text-lg font-medium max-w-xl"
                     >
-                        <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">
-                            <ImageIcon size={16} /> Photos
-                        </div>
-                        <ImageUpload onUploadComplete={setImageUrls} />
-                    </motion.div>
+                        Share your items with the community. Create a stunning listing in seconds.
+                    </motion.p>
                 </div>
 
-                {/* Map Section */}
-                <div className="w-full lg:w-[400px] space-y-8">
-                    <motion.div
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-white dark:bg-gray-900 p-8 rounded-[2.5rem] shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 h-[500px] flex flex-col transition-all"
-                    >
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-gray-300">
-                                <MapPin size={16} /> Location
-                            </div>
-                            <button
-                                onClick={handleUseCurrentLocation}
-                                disabled={locating}
-                                type="button"
-                                className="text-xs flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-bold hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50"
+                <form onSubmit={handleSubmit}>
+                    <div className="flex flex-col lg:flex-row gap-8">
+                        {/* LEFT COLUMN: Input Fields */}
+                        <div className="flex-1 space-y-8">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="bg-white dark:bg-gray-900/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-white/20 dark:border-gray-800 space-y-8"
                             >
-                                {locating ? <Loader size={12} className="animate-spin" /> : <Crosshair size={12} />}
-                                Use Current Location
-                            </button>
+                                <div className="space-y-6">
+                                    <div className="relative group">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">Title</label>
+                                        <div className="relative">
+                                            <Type className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                            <input
+                                                type="text"
+                                                name="title"
+                                                required
+                                                className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-bold text-lg text-gray-900 dark:text-white placeholder:font-normal placeholder:text-gray-400"
+                                                placeholder="e.g. vintage camera lens"
+                                                value={formData.title}
+                                                onChange={handleChange}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="relative group">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">Description</label>
+                                        <div className="relative">
+                                            <AlignLeft className="absolute left-4 top-6 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                            <textarea
+                                                name="description"
+                                                required
+                                                rows="5"
+                                                className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium text-gray-900 dark:text-white resize-none placeholder:font-normal placeholder:text-gray-400"
+                                                placeholder="Tell buyers what makes your item special..."
+                                                value={formData.description}
+                                                onChange={handleChange}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="relative group">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">Price</label>
+                                            <div className="relative">
+                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-green-500 transition-colors font-black text-lg">₦</div>
+                                                <input
+                                                    type="number"
+                                                    name="price"
+                                                    required
+                                                    min="0"
+                                                    step="0.01"
+                                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500 transition-all font-bold text-lg text-gray-900 dark:text-white placeholder:font-normal placeholder:text-gray-400"
+                                                    placeholder="0.00"
+                                                    value={formData.price}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="relative group">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">Category</label>
+                                            <div className="relative">
+                                                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+                                                <select
+                                                    name="category"
+                                                    className="w-full pl-12 pr-10 py-4 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-bold text-gray-900 dark:text-white appearance-none cursor-pointer"
+                                                    value={formData.category}
+                                                    onChange={handleChange}
+                                                >
+                                                    {["General", "Electronics", "Furniture", "Clothing", "Vehicles", "Books", "Services", "Other"].map(opt => (
+                                                        <option key={opt} value={opt} className="bg-white dark:bg-gray-900">{opt}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                    <ArrowRight className="rotate-90 text-gray-400" size={16} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="bg-white dark:bg-gray-900/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-white/20 dark:border-gray-800"
+                            >
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600">
+                                        <UploadCloud size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg text-gray-900 dark:text-white">Upload Photos</h3>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Add at least 3 photos (Cover first)</p>
+                                    </div>
+                                </div>
+                                <ImageUpload onUploadComplete={setImageUrls} />
+                            </motion.div>
                         </div>
 
-                        <div className="flex-1 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 relative z-0">
-                            <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
-                                <LayersControl position="topright">
-                                    <LayersControl.BaseLayer checked name="Satellite (Realistic)">
-                                        <TileLayer
-                                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                                            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-                                        />
-                                    </LayersControl.BaseLayer>
-                                    <LayersControl.BaseLayer name="Street Map">
-                                        <TileLayer
-                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                        />
-                                    </LayersControl.BaseLayer>
-                                </LayersControl>
-                                <LocationMarker position={location} setPosition={setLocation} accuracy={accuracy} address={address} />
-                                <RecenterAutomatically lat={location?.lat} lng={location?.lng} />
-                            </MapContainer>
-                            {location && (
-                                <div className="absolute bottom-2 left-2 right-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur px-4 py-3 rounded-xl text-xs shadow-2xl border border-gray-200 dark:border-gray-700 z-[1000] space-y-2 transition-all">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <div className="flex items-center gap-1.5 font-mono text-gray-500 dark:text-gray-400">
-                                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                            {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-                                        </div>
-                                        <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
-                                            <div className="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
-                                            Pinned
-                                        </span>
+                        {/* RIGHT COLUMN: Map & Submit */}
+                        <div className="w-full lg:w-[450px] space-y-8">
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="bg-white dark:bg-gray-900/80 backdrop-blur-xl p-2 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-white/20 dark:border-gray-800 h-[500px] flex flex-col relative"
+                            >
+                                <div className="absolute top-6 left-6 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg flex items-center gap-2">
+                                    <MapPin size={16} className="text-red-500" />
+                                    <span className="text-xs font-bold text-gray-900 dark:text-white">Location Required</span>
+                                </div>
+
+                                <div className="flex-1 rounded-[2rem] overflow-hidden relative z-0">
+                                    <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+                                        <LayersControl position="bottomright">
+                                            <LayersControl.BaseLayer checked name="Satellite">
+                                                <TileLayer
+                                                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                                                    attribution='&copy; Esri'
+                                                />
+                                            </LayersControl.BaseLayer>
+                                            <LayersControl.BaseLayer name="Street">
+                                                <TileLayer
+                                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                                    attribution='&copy; OpenStreetMap'
+                                                />
+                                            </LayersControl.BaseLayer>
+                                        </LayersControl>
+                                        <LocationMarker position={location} setPosition={setLocation} accuracy={accuracy} address={address} />
+                                        <RecenterAutomatically lat={location?.lat} lng={location?.lng} />
+                                    </MapContainer>
+
+                                    {/* Action Buttons Overlay */}
+                                    <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
+                                        <button
+                                            onClick={handleUseCurrentLocation}
+                                            disabled={locating}
+                                            type="button"
+                                            className="w-12 h-12 bg-blue-600 text-white rounded-xl shadow-lg flex items-center justify-center hover:scale-105 transition-transform active:scale-95 disabled:opacity-50"
+                                            title="Use Current Location"
+                                        >
+                                            {locating ? <Loader size={20} className="animate-spin" /> : <Crosshair size={20} />}
+                                        </button>
                                     </div>
-                                    {address && (
-                                        <p className="text-gray-900 dark:text-white font-medium leading-relaxed border-t border-gray-100 dark:border-gray-800 pt-2">
-                                            {address}
-                                        </p>
+
+                                    {location && (
+                                        <div className="absolute top-4 right-4 left-auto max-w-[200px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl z-[1000]">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-gray-500 dark:text-gray-400">Selected</span>
+                                            </div>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white leading-tight">
+                                                {address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
+                            </motion.div>
+
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm font-bold border border-red-100 dark:border-red-900/30 flex items-center gap-3"
+                                >
+                                    <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center flex-shrink-0">!</div>
+                                    {error}
+                                </motion.div>
                             )}
+
+                            <motion.button
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-6 px-8 rounded-3xl shadow-xl shadow-blue-600/20 hover:shadow-blue-600/40 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3 text-xl relative overflow-hidden group"
+                            >
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                                {loading ? <Loader className="animate-spin" size={24} /> : "Publish Listing"}
+                                {!loading && <ArrowRight size={24} />}
+                            </motion.button>
                         </div>
-                    </motion.div>
-
-                    {error && <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm font-medium border border-red-100 dark:border-red-900/30">{error}</div>}
-
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="w-full bg-blue-600 dark:bg-blue-600 text-white font-black py-5 px-6 rounded-3xl hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg"
-                    >
-                        {loading && <Loader className="animate-spin" size={24} />}
-                        {loading ? "Publishing..." : "Publish Listing"}
-                    </button>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
 

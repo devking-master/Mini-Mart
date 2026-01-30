@@ -17,6 +17,10 @@
   color-scheme: dark;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
@@ -30,10 +34,37 @@ body {
   width: 100%;
 }
 
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
 
+::-webkit-scrollbar-track {
+  background: transparent;
+}
 
+::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.2);
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
 
-/* Custom scrollbar hiding */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(155, 155, 155, 0.4);
+}
+
+/* Selection Style */
+::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: inherit;
+}
+
+.dark ::selection {
+  background: rgba(59, 130, 246, 0.4);
+}
+
+/* Utilities */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -43,7 +74,15 @@ body {
   scrollbar-width: none;
 }
 
-/* Mask fade effect for horizontal scroll */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(155, 155, 155, 0.1);
+  border: none;
+}
+
 .mask-fade {
   mask-image: linear-gradient(to right, black 85%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);

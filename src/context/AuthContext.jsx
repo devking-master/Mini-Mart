@@ -28,9 +28,12 @@ export function AuthProvider({ children }) {
         return signOut(auth);
     }
 
-    function updateUserProfile(user, data) {
-        return updateProfile(user, data).then(() => {
-            setCurrentUser({ ...user }); // Force state update
+    async function updateUserProfile(data) {
+        if (!auth.currentUser) return Promise.reject("No user logged in");
+        return updateProfile(auth.currentUser, data).then(() => {
+            // We use spread to trigger re-render in React. 
+            // The components will receive a plain object which is fine for rendering.
+            setCurrentUser({ ...auth.currentUser });
         });
     }
 
