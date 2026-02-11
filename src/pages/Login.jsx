@@ -37,7 +37,7 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex bg-[#050505] overflow-hidden selection:bg-blue-500/30">
+        <div className="min-h-screen flex bg-[#050505] overflow-y-auto lg:overflow-hidden selection:bg-blue-500/30">
             {/* Left Side: High-Impact Visual */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center border-r border-white/5">
                 <Vortex className="opacity-50" />
@@ -93,7 +93,7 @@ export default function Login() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="flex-1 relative flex items-center justify-center p-6 lg:p-12 overflow-hidden">
+            <div className="flex-1 relative flex items-center justify-center p-4 sm:p-8 lg:p-12 min-h-screen">
                 <AuroraBackground className="opacity-30" />
 
                 <motion.div
@@ -102,20 +102,20 @@ export default function Login() {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className="relative z-10 w-full max-w-[450px]"
                 >
-                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-[0_24px_80px_rgba(0,0,0,0.5)] relative group">
-                        <div className="space-y-10">
+                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 lg:p-12 shadow-[0_24px_80px_rgba(0,0,0,0.5)] relative group">
+                        <div className="space-y-8 lg:space-y-10">
                             {/* Header */}
                             <div className="text-center md:text-left space-y-4">
                                 <motion.div
                                     initial={{ y: -10, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
-                                    className="inline-flex lg:hidden items-center justify-center w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-2xl mb-4"
+                                    className="inline-flex lg:hidden items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-2xl mb-4"
                                 >
                                     <ShoppingBag size={28} />
                                 </motion.div>
                                 <div>
-                                    <h2 className="text-4xl font-black text-white tracking-tighter leading-none mb-2">Welcome <span className="text-blue-500 italic">Back!</span></h2>
-                                    <p className="text-gray-400 font-medium text-sm">Sign in to your premium dashboard</p>
+                                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter leading-none mb-2">Welcome <span className="text-blue-500 italic">Back!</span></h2>
+                                    <p className="text-gray-400 font-medium text-xs sm:text-sm">Sign in to your premium dashboard</p>
                                 </div>
                             </div>
 
@@ -123,22 +123,22 @@ export default function Login() {
                                 <motion.div
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 text-[11px] font-black uppercase tracking-widest"
+                                    className="p-3.5 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-xl sm:rounded-2xl flex items-center gap-3 text-red-400 text-[10px] sm:text-[11px] font-black uppercase tracking-widest"
                                 >
                                     <AlertCircle size={18} /> {error}
                                 </motion.div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="space-y-5">
+                            <form onSubmit={handleSubmit} className="space-y-5 sm:y-6">
+                                <div className="space-y-4 sm:space-y-5">
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Identity/Email</Label>
+                                        <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Identity/Email</Label>
                                         <div className="relative group/field">
                                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within/field:text-blue-500 transition-colors z-10" size={18} />
                                             <Input
                                                 type="email"
                                                 required
-                                                className="pl-12 pr-4 py-4.5 bg-white/5 border-transparent focus:border-blue-500/50 rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
+                                                className="pl-12 pr-4 py-4 sm:py-4.5 bg-white/5 border-transparent focus:border-blue-500/50 rounded-xl sm:rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
                                                 placeholder="your@email.com"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
@@ -148,7 +148,7 @@ export default function Login() {
 
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between ml-1">
-                                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Pass-Key</Label>
+                                            <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-500">Pass-Key</Label>
                                             <Link to="/forgot-password" size="sm" className="text-blue-500 hover:text-blue-400 text-[9px] font-black uppercase tracking-widest transition-colors">
                                                 Forgot?
                                             </Link>
@@ -158,7 +158,7 @@ export default function Login() {
                                             <Input
                                                 type={showPassword ? "text" : "password"}
                                                 required
-                                                className="pl-12 pr-12 py-4.5 bg-white/5 border-transparent focus:border-blue-500/50 rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
+                                                className="pl-12 pr-12 py-4 sm:py-4.5 bg-white/5 border-transparent focus:border-blue-500/50 rounded-xl sm:rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
                                                 placeholder="••••••••"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
@@ -179,7 +179,7 @@ export default function Login() {
                                     whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full flex items-center justify-center gap-2 py-5 px-6 bg-white text-black hover:bg-blue-600 hover:text-white rounded-[1.8rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl disabled:opacity-50 group/btn"
+                                    className="w-full flex items-center justify-center gap-2 py-4 sm:py-5 px-6 bg-white text-black hover:bg-blue-600 hover:text-white rounded-xl sm:rounded-[1.8rem] font-black text-[10px] sm:text-xs uppercase tracking-[0.2em] transition-all shadow-2xl disabled:opacity-50 group/btn"
                                 >
                                     {loading ? (
                                         <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -188,8 +188,8 @@ export default function Login() {
                                     )}
                                 </motion.button>
 
-                                <div className="text-center pt-4">
-                                    <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
+                                <div className="text-center pt-2 sm:pt-4">
+                                    <p className="text-gray-500 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest">
                                         N3W TO THE HUB?{" "}
                                         <Link to="/register" className="text-white hover:text-blue-500 underline underline-offset-4 decoration-blue-500/50 transition-colors">
                                             Create Identity

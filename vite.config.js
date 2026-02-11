@@ -16,6 +16,9 @@ export default defineConfig({
       },
     }),
   ],
+  optimizeDeps: {
+    include: ['prop-types', 'attr-accept', 'file-selector'],
+  },
   server: {
     host: true
   }

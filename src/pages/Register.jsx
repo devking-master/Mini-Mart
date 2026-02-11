@@ -69,7 +69,7 @@ export default function Register() {
     }
 
     return (
-        <div className="min-h-screen flex bg-[#050505] overflow-hidden selection:bg-blue-500/30">
+        <div className="min-h-screen flex bg-[#050505] overflow-y-auto lg:overflow-hidden selection:bg-blue-500/30">
             {/* Left Side: High-Impact Visual */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center border-r border-white/5">
                 <Vortex className="opacity-40" />
@@ -114,7 +114,7 @@ export default function Register() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="flex-1 relative flex items-center justify-center p-6 lg:p-12 overflow-hidden">
+            <div className="flex-1 relative flex items-center justify-center p-4 sm:p-8 lg:p-12 min-h-screen">
                 <AuroraBackground className="opacity-30" />
 
                 <motion.div
@@ -123,20 +123,20 @@ export default function Register() {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className="relative z-10 w-full max-w-[500px]"
                 >
-                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-[0_24px_80px_rgba(0,0,0,0.5)] relative overflow-hidden group">
-                        <div className="space-y-8">
+                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 lg:p-12 shadow-[0_24px_80px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+                        <div className="space-y-6 lg:space-y-8">
                             {/* Header */}
                             <div className="text-center md:text-left space-y-4">
                                 <motion.div
                                     initial={{ y: -10, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
-                                    className="inline-flex lg:hidden items-center justify-center w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-2xl mb-4"
+                                    className="inline-flex lg:hidden items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-2xl mb-4"
                                 >
                                     <ShoppingBag size={28} />
                                 </motion.div>
                                 <div>
-                                    <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-none mb-2">Create <span className="text-indigo-500 italic">Identity.</span></h2>
-                                    <p className="text-gray-400 font-medium text-sm">Join the elite marketplace network</p>
+                                    <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter leading-none mb-2">Create <span className="text-indigo-500 italic">Identity.</span></h2>
+                                    <p className="text-gray-400 font-medium text-xs sm:text-sm">Join the elite marketplace network</p>
                                 </div>
                             </div>
 
@@ -146,38 +146,38 @@ export default function Register() {
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 'auto' }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 text-[10px] font-black uppercase tracking-widest"
+                                        className="p-3.5 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-xl sm:rounded-2xl flex items-center gap-3 text-red-400 text-[10px] font-black uppercase tracking-widest"
                                     >
                                         <AlertCircle size={18} /> {error}
                                     </motion.div>
                                 )}
                             </AnimatePresence>
 
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                <div className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                                <div className="space-y-4 sm:space-y-5">
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Universal Username</Label>
+                                        <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Universal Username</Label>
                                         <div className="relative group/field">
                                             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within/field:text-indigo-500 transition-colors z-10" size={18} />
                                             <Input
                                                 ref={usernameRef}
                                                 type="text"
                                                 required
-                                                className="pl-12 pr-4 py-4 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
+                                                className="pl-12 pr-4 py-4 lg:py-4.5 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-xl sm:rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
                                                 placeholder="johndoe"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Communication/Email</Label>
+                                        <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Communication/Email</Label>
                                         <div className="relative group/field">
                                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within/field:text-indigo-500 transition-colors z-10" size={18} />
                                             <Input
                                                 ref={emailRef}
                                                 type="email"
                                                 required
-                                                className="pl-12 pr-4 py-4 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
+                                                className="pl-12 pr-4 py-4 lg:py-4.5 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-xl sm:rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
                                                 placeholder="you@example.com"
                                             />
                                         </div>
@@ -185,14 +185,14 @@ export default function Register() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Password</Label>
+                                            <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Password</Label>
                                             <div className="relative group/field">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within/field:text-indigo-500 transition-colors z-10" size={18} />
                                                 <Input
                                                     ref={passwordRef}
                                                     type={showPassword ? "text" : "password"}
                                                     required
-                                                    className="pl-12 pr-12 py-4 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
+                                                    className="pl-12 pr-12 py-4 lg:py-4.5 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-xl sm:rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
                                                     placeholder="••••••"
                                                 />
                                                 <button
@@ -206,14 +206,14 @@ export default function Register() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Repeat</Label>
+                                            <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Repeat</Label>
                                             <div className="relative group/field">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within/field:text-indigo-500 transition-colors z-10" size={18} />
                                                 <Input
                                                     ref={passwordConfirmRef}
                                                     type={showConfirmPassword ? "text" : "password"}
                                                     required
-                                                    className="pl-12 pr-12 py-4 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
+                                                    className="pl-12 pr-12 py-4 lg:py-4.5 bg-white/5 border-transparent focus:border-indigo-500/50 rounded-xl sm:rounded-2xl text-white font-bold placeholder:text-gray-700 transition-all shadow-inner"
                                                     placeholder="••••••"
                                                 />
                                                 <button
@@ -233,7 +233,7 @@ export default function Register() {
                                     whileTap={{ scale: 0.98 }}
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full flex items-center justify-center gap-2 py-5 px-6 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-[1.8rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl disabled:opacity-50 group/btn"
+                                    className="w-full flex items-center justify-center gap-2 py-4 sm:py-5 px-6 bg-white text-black hover:bg-indigo-600 hover:text-white rounded-xl sm:rounded-[1.8rem] font-black text-[10px] sm:text-xs uppercase tracking-[0.2em] transition-all shadow-2xl disabled:opacity-50 group/btn"
                                 >
                                     {loading ? (
                                         <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
@@ -242,8 +242,8 @@ export default function Register() {
                                     )}
                                 </motion.button>
 
-                                <div className="text-center pt-4">
-                                    <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">
+                                <div className="text-center pt-2 sm:pt-4">
+                                    <p className="text-gray-500 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest">
                                         HAV3 AN IDENTITY?{" "}
                                         <Link to="/login" className="text-white hover:text-indigo-500 underline underline-offset-4 decoration-indigo-500/50 transition-colors">
                                             Authorize Access

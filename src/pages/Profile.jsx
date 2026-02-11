@@ -4,10 +4,11 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { Link } from 'react-router-dom';
 import MockPaymentModal from '../components/MockPaymentModal';
-import { User, Package, Calendar, MapPin, ArrowRight, Plus, Camera, Loader, Edit2, Save, X, BadgeCheck, LayoutDashboard, Zap, Flame, Share2, Copy, Check, ShieldCheck } from 'lucide-react';
+import { User, Package, Calendar, MapPin, ArrowRight, Plus, Camera, Loader, Edit2, Save, X, BadgeCheck, LayoutDashboard, Zap, Flame, Share2, Copy, Check, ShieldCheck, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import AlertModal from '../components/AlertModal';
+import QRCodeModal from '../components/QRCodeModal';
 
 const IMGBB_API_KEY = "5c96460dbce35dbdb36e2e26b2dad63e";
 
@@ -32,6 +33,7 @@ export default function Profile() {
         type: null,
         data: null
     });
+    const [showQRModal, setShowQRModal] = useState(false);
 
     const triggerVerification = () => {
         if (currentUser?.isVerified) return;
@@ -285,6 +287,12 @@ export default function Profile() {
                                     >
                                         <Share2 size={12} /> Share Store
                                     </button>
+                                    <button
+                                        onClick={() => setShowQRModal(true)}
+                                        className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-100 dark:border-gray-700 rounded-xl text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all shadow-lg"
+                                    >
+                                        <QrCode size={12} /> Store QR
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -442,6 +450,13 @@ export default function Profile() {
                 title={alertState.title}
                 message={alertState.message}
                 type={alertState.type}
+            />
+
+            <QRCodeModal
+                isOpen={showQRModal}
+                onClose={() => setShowQRModal(false)}
+                url={window.location.href}
+                title={`${currentUser?.displayName || 'Merchant'}'s Store`}
             />
         </div >
     );

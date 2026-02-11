@@ -7,8 +7,9 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { AnimatePresence, motion } from 'framer-motion';
-import { MessageCircle, Trash2, ArrowLeft, MapPin, Calendar, ChevronLeft, ChevronRight, Share2, ShieldCheck, Zap, BadgeCheck, Flame, AlertCircle } from 'lucide-react';
+import { MessageCircle, Trash2, ArrowLeft, MapPin, Calendar, ChevronLeft, ChevronRight, Share2, ShieldCheck, Zap, BadgeCheck, Flame, AlertCircle, QrCode } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
+import QRCodeModal from '../components/QRCodeModal';
 import { DirectionAwareHover } from '../components/animations/DirectionAwareHover';
 import { HoverBorderGradient } from '../components/animations/HoverBorderGradient';
 import { MultiStepLoader } from '../components/animations/Loader';
@@ -32,6 +33,7 @@ export default function ListingDetail() {
     const [listing, setListing] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [showQRModal, setShowQRModal] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -154,9 +156,16 @@ export default function ListingDetail() {
                             <span className="flex items-center gap-1.5"><Calendar size={14} /> {listing.createdAt ? new Date(listing.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setShowQRModal(true)}
+                            className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-blue-600 transition-all shadow-sm"
+                            title="Share via QR Code"
+                        >
+                            <QrCode size={18} />
+                        </button>
                         <button className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-blue-600 transition-all shadow-sm"><Share2 size={18} /></button>
-                        <div className="h-10 border-l border-gray-200 dark:border-gray-800 mx-1 hidden md:block" />
+                        <div className="h-10 border-l border-gray-200 dark:border-gray-800 mx-0.5 hidden md:block" />
                         <div className="text-right">
                             <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Asking Price</p>
                             <p className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight leading-none">₦{listing.price?.toLocaleString() || listing.price}</p>
@@ -423,6 +432,13 @@ export default function ListingDetail() {
                 confirmText="Yes, Delete it"
                 isDestructive={true}
                 loading={deleting}
+            />
+
+            <QRCodeModal
+                isOpen={showQRModal}
+                onClose={() => setShowQRModal(false)}
+                url={window.location.href}
+                title={listing.title}
             />
         </div>
     );
